@@ -43,4 +43,4 @@ jobs:
             docker stop frontend-app || true
             docker rm frontend-app || true
             # Correr el nuevo contenedor en el puerto 80
-            docker run -d --name frontend-app -p 3000:80 ${{ secrets.DOCKER_USERNAME }}/innovatech-frontend:latest
+            docker run -d --name frontend-app --restart always -p 3000:80 ${{ secrets.DOCKER_USERNAME }}/innovatech-frontend:latest
