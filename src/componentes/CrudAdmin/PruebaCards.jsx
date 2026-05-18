@@ -22,7 +22,7 @@ export const PruebaCards = () => {
         <CardComponent
           title="Revisar Ordenes de despacho 🚚"
           description="Consulta los despachos realizados, modifica los registros de intentos o cierra la orden"
-          buttonText="Consultar prueba 1"
+          buttonText="Consultar"
           onClick={() => {
             setTablaCompras(false);
             setTablaOrdenes(true);
