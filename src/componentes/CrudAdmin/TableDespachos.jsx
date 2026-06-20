@@ -4,7 +4,7 @@ import { Modal } from "./Modal";
 import { FormCierreDespacho } from "./FormCierreDespacho";
 
 // CAMBIO: Definición de la URL dinámica usando variables de entorno de Vite
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8091";
+const API_URL = "http://ab4c3407667b94f96af654877f77605c-2136966934.us-east-1.elb.amazonaws.com";
 
 export const TableDespachos = () => {
   const [despachos, setDespachos] = useState([]);
