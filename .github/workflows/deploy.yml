@@ -1,54 +1,48 @@
-name: CI/CD Pipeline - Despachos
+name: CI/CD Pipeline - Frontend
 
 on:
   push:
     branches:
-      - deploy # (Cámbialo a 'master' si tu rama principal se llama así)
+      - deploy # La rama que activa el pipeline
 
 jobs:
   build-push-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: 1. Descargar el código
-        uses: actions/checkout@v3
+    - name: 1. Descargar el código
+      uses: actions/checkout@v3
 
-      - name: 2. Configurar Credenciales de AWS
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: us-east-1
+    - name: 2. Configurar Credenciales de AWS
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: us-east-1
 
-      - name: 3. Iniciar sesión en Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+    - name: 3. Iniciar sesión en Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
 
-      - name: 4. Construir y Subir Imagen Docker a ECR
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: innovatech-backend-despachos
-          IMAGE_TAG: latest
-        run: |
-          # Entramos a la carpeta donde realmente está el Dockerfile
-          cd Springboot-API-REST-DESPACHO
-          
-          # Construye la imagen usando tu Dockerfile
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          
-          # Sube la imagen a AWS ECR
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    - name: 4. Construir y Subir Imagen Docker a ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REPOSITORY: innovatech-frontend
+        IMAGE_TAG: latest
+      run: |
+        # Como el Dockerfile está en la raíz, construimos y subimos directo
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
-      - name: 5. Conectar a Kubernetes (EKS)
-        run: |
-          aws eks update-kubeconfig --region us-east-1 --name innovatech-eks
+    - name: 5. Conectar a Kubernetes (EKS)
+      run: |
+        aws eks update-kubeconfig --region us-east-1 --name innovatech-eks
 
-      - name: 6. Desplegar Infraestructura en EKS
-        run: |
-          # Esto obliga a Kubernetes a recargar la imagen "latest"
-          kubectl apply -f k8s/innovatech-secret.yaml
-          kubectl apply -f k8s/innovatech-deploy.yaml
-          kubectl apply -f k8s/innovatech-hpa.yaml
-          
-          # Reinicia los contenedores para asegurar que toman el código nuevo
-          kubectl rollout restart deployment despachos-deployment
+    - name: 6. Desplegar Infraestructura en EKS
+      run: |
+        kubectl apply -f k8s/innovatech-secret.yaml
+        kubectl apply -f k8s/innovatech-deploy.yaml
+        kubectl apply -f k8s/innovatech-hpa.yaml
+        
+        # Reinicia los contenedores del frontend para asegurar que toman el código nuevo
+        kubectl rollout restart deployment frontend-deployment
