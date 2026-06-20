@@ -24,7 +24,7 @@ spec:
             cpu: "100m"
         env:
         - name: DB_ENDPOINT
-          value: "innovatech-cluster.cluster-cobjlmjezfum.us-east-1.rds.amazonaws.com"
+          value: "innovatech-db.cluster-cm8p0a0vvw12.us-east-1.rds.amazonaws.com"
         - name: DB_PORT
           value: "3306"
         - name: DB_NAME
@@ -79,7 +79,7 @@ spec:
             cpu: "100m"
         env:
         - name: DB_ENDPOINT
-          value: "innovatech-cluster.cluster-cobjlmjezfum.us-east-1.rds.amazonaws.com"
+          value: "innovatech-db.cluster-cm8p0a0vvw12.us-east-1.rds.amazonaws.com"
         - name: DB_PORT
           value: "3306"
         - name: DB_NAME
