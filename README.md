@@ -1,80 +1,76 @@
-🐳 Arquitectura Docker
-Dockerfile (Multi-stage build)
-Etapa 1: Build
+# 🌐 Frontend Platform - Grupo Cordillera (InnovaTech Chile)
 
-Dockerfile
-FROM node:18-alpine AS build
-Usa Node 18 en Alpine (ligero)
-Instala dependencias: npm install
-Compila React: npm run build → genera carpeta dist/
-Etapa 2: Producción
+Esta aplicación web es la capa de presentación principal (Frontend) para la gestión del sistema operativo de InnovaTech Chile. Desarrollada en **React + Vite**, ha sido diseñada bajo una arquitectura moderna y desplegada de forma nativa en la nube mediante contenedores orquestados en **Amazon EKS**.
 
-Dockerfile
-FROM nginx:stable-alpine
-Copia archivos compilados a Nginx
-Configura Nginx para servir React Router
-Expone puerto 80
-¿Por qué este setup?
-Menor tamaño: Solo el código compilado va en la imagen final (sin node_modules)
-Más seguro: Nginx en lugar de Node en producción
-Variables de entorno: VITE_API_BASE_URL se pasa en tiempo de construcción
-🚀 Flujo de Despliegue en AWS EC2
-Code
-1. GitHub Repo
-    ↓
-2. Pipeline CI/CD (probablemente GitHub Actions)
-    ↓
-3. Docker build → docker-compose.yml
-    ↓
-4. Push a Docker Registry (DockerHub)
-    ↓
-5. EC2 instance
-    ├─ docker-compose pull
-    └─ docker-compose up -d
-    ↓
-6. Frontend servido en puerto 80
-📦 Docker Compose en EC2
-YAML
-services:
-  frontend:
-    image: "${DOCKER_USERNAME}/innovatech-frontend:latest"
-    ports:
-      - "80:80"      # Accesible públicamente
-    restart: always  # Se reinicia si cae
-🔧 Pasos para Ejecutar en EC2
-1. En tu máquina local (generar imagen Docker)
-bash
-# Construir la imagen
-docker build --build-arg VITE_API_BASE_URL=https://tu-backend-api.com -t tu-usuario/innovatech-frontend:latest .
+---
 
-# Subir a DockerHub
-docker push tu-usuario/innovatech-frontend:latest
-2. En la instancia EC2 (con Docker instalado)
-bash
-# Obtener docker-compose.yml del repositorio
-git clone https://github.com/gacuevas2005/DevOps-Proyecto-Frontend.git
-cd DevOps-Proyecto-Frontend
+## 🚀 Ficha Técnica y Tecnologías
 
-# Configurar credenciales de DockerHub (si es privado)
-docker login
+*   **Librería Principal:** React 18
+*   **Empaquetador:** Vite (Rendimiento optimizado)
+*   **Servidor Web en Producción:** Nginx (Alpine)
+*   **Contenedorización:** Docker (Multi-stage build)
+*   **Registro de Contenedores:** Amazon ECR
+*   **Orquestación Cloud:** Amazon EKS (Kubernetes)
+*   **CI/CD:** GitHub Actions
+*   **Exposición de Red:** AWS Application Load Balancer (ALB)
 
-# Descargar e iniciar el contenedor
-docker-compose up -d
+---
 
-# Verificar que está corriendo
-docker ps
-3. Acceder al frontend
-Code
-http://<IP-EC2>:80
-📊 Ventajas de esta Configuración
-Aspecto	Beneficio
-Multi-stage	Imagen 10x más pequeña
-Alpine	Menor consumo de recursos
-Nginx	Alto rendimiento en producción
-Docker Compose	Fácil de actualizar/escalar
-Restart policy	Alta disponibilidad
-⚠️ Consideraciones para EC2
-Security Group: Abre puerto 80 (y 443 si usas HTTPS)
-Dominio: Apunta tu dominio a la IP elástica de EC2
-Variables de entorno: El VITE_API_BASE_URL debe apuntar a tu backend
-AWS ECR: Considera usar ECR en lugar de DockerHub para mejor integración con AWS
+## ☁️ Novedades Arquitectónicas (Evaluación 3)
+
+Para esta fase, el frontend abandonó el despliegue monolítico en instancias EC2 con `docker-compose` para adoptar una arquitectura empresarial de microservicios:
+
+*   **Orquestación en Kubernetes:** El frontend ahora se despliega como un *Deployment* escalable dentro de un clúster EKS.
+*   **Pipeline CI/CD Directo a AWS:** GitHub Actions automatiza la construcción y el envío (push) de la imagen segura directamente a **Amazon ECR** (reemplazando a DockerHub).
+*   **El Fin del CORS (Reverse Proxy):** Esta es la mejora más importante. El contenedor de producción ya no busca una API pública. Nginx fue configurado como un proxy inverso interno. Las peticiones a `/api/v1/despachos` y `/api/v1/ventas` son interceptadas por Nginx y enrutadas internamente por la red de Kubernetes hacia `despachos-service:8091` y `ventas-service:8092`, brindando máxima seguridad.
+
+---
+
+## 🐳 Arquitectura Docker (Multi-stage build)
+
+Utilizamos un `Dockerfile` de múltiples etapas para garantizar seguridad y el mínimo peso posible en producción:
+
+### Etapa 1: Build (Node)
+*   `FROM node:18-alpine AS build`: Usa una imagen base ligera.
+*   Instala las dependencias (`npm install`).
+*   Compila React (`npm run build`), generando los archivos estáticos optimizados en la carpeta `dist/`.
+
+### Etapa 2: Producción (Nginx Reverse Proxy)
+*   `FROM nginx:stable-alpine`: Utiliza un servidor web ultraligero.
+*   Copia únicamente los archivos estáticos compilados de la Etapa 1.
+*   Inyecta el archivo de configuración custom de Nginx para manejar el *Routing* de React (SPA) y el *Proxy Pass* hacia los microservicios backend.
+
+**📊 Ventajas de esta configuración:**
+*   **Imagen 10x más pequeña:** Solo el código compilado viaja a producción (sin carpeta `node_modules`).
+*   **Seguridad:** Node.js no se ejecuta en producción; Nginx sirve los estáticos y enruta el tráfico.
+
+---
+
+## 🛠️ Ejecución y Desarrollo Local
+
+### 1. Entorno de Desarrollo (Modo Dev)
+Para trabajar en el código fuente de manera local con *Hot Reload*:
+```bash
+npm install
+npm run dev
+2. Pruebas con Docker Local
+Para generar la imagen simulando el pipeline de producción:
+
+Bash
+docker build -t innovatech-frontend:latest .
+docker run -p 80:80 innovatech-frontend:latest
+(Nota: Al correr en Docker local, el Reverse Proxy intentará buscar los servicios de Kubernetes. Si no tienes los backends corriendo en tu red Docker local, las llamadas a la API devolverán error 502, pero la interfaz visual cargará correctamente en http://localhost).
+
+🔄 Flujo de Despliegue en AWS EKS
+El ciclo de vida de la aplicación está 100% automatizado:
+
+Commit / Push: El desarrollador envía cambios a la rama main.
+
+GitHub Actions: El pipeline detecta el cambio, construye la imagen Multi-stage y aprueba las pruebas de calidad.
+
+Amazon ECR: La imagen optimizada es enviada al registro privado de AWS.
+
+Amazon EKS: El pipeline actualiza el manifiesto de despliegue (deployment.yaml). Kubernetes descarga la nueva imagen y realiza un Rolling Update (despliegue sin tiempo de inactividad).
+
+Acceso Público: Los usuarios acceden a la versión actualizada a través de la URL pública del balanceador de carga (Load Balancer).
