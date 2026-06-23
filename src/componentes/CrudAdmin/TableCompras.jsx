@@ -4,7 +4,7 @@ import { FormDespacho } from "./FormDespacho";
 import axios from "axios";
 
 // CAMBIO: Definición de la URL dinámica
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8091";
+const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8092";
 
 export const TableCompras = () => {
   const [ventas, setVentas] = useState([]);
