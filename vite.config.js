@@ -14,7 +14,7 @@ export default defineConfig({
         rewrite: (path) => path 
       },
       // NUEVO: Tu proxy para Ventas
-      '/api/v1/ventas': {
+      '/api': {
         target: 'http://ab4c3407667b94f96af654877f77605c-2136966934.us-east-1.elb.amazonaws.com',
         changeOrigin: true,
         secure: false,
