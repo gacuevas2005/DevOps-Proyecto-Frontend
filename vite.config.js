@@ -12,7 +12,14 @@ export default defineConfig({
         secure: false,
         // ESTA LÍNEA ES CLAVE: No elimines el /api si tu backend espera la ruta completa
         rewrite: (path) => path 
+      },
+      // NUEVO: Tu proxy para Ventas
+      '/api/v1/ventas': {
+        target: 'http://localhost:8092',
+        changeOrigin: true,
+        secure: false,
       }
     }
   }
 })
+   
