@@ -3,23 +3,20 @@ import { Modal } from "./Modal";
 import { FormDespacho } from "./FormDespacho";
 import axios from "axios";
 
-// CAMBIO: Definición de la URL dinámica
-const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8092";
-
 export const TableCompras = () => {
+  // Estado para guardar las ventas
   const [ventas, setVentas] = useState([]);
 
+  // Llamada a la API con ruta relativa (para que el proxy la atrape)
   const compras = async () => {
-    // CAMBIO: Se reemplaza la IP fija por la variable API_URL
     await axios
-      .get(`${API_URL}/api/v1/ventas`, {
+      .get('/api/v1/ventas', {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json'
         }
       })
       .then((response) => {
-        console.log(response.data);
         setVentas(response.data);
       })
       .catch((error) => {
@@ -27,6 +24,7 @@ export const TableCompras = () => {
       });
   };
 
+  // Se ejecuta automáticamente al cargar el componente
   useEffect(() => {
     compras();
   }, []);
